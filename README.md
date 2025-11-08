@@ -17,13 +17,12 @@ airplane-seat-reservation-app
 │ ├── styles
 │ │ └── styles.css # Estilos CSS de la aplicación
 │ ├── views
-│ │ ├── seatReservation.html # Vista donde se seleccionan y reservan los asientos
-│ │ └── report.html # Vista para ver el reporte de asientos reservados
+│ │ ├── seatReservation.html # Vista para seleccionar y reservar asientos
+│ │ └── report.html # Vista para ver el reporte de reservas
 │ └── assets
 │ └── seats.json # Datos iniciales de los asientos
-├── package.json # Configuración del proyecto (dependencias npm)
+├── package.json # Dependencias del proyecto
 └── README.md # Documentación del proyecto
-
 
 ---
 
