@@ -8,7 +8,9 @@ Este proyecto es una aplicación web desarrollada con **AngularJS** que permite 
 
 airplane-seat-reservation-app
 ├── src
+
 index.html # Archivo principal que inicia la aplicación
+
 app.js # Configuración e inicialización de AngularJS
 
 │ ├── controllers
