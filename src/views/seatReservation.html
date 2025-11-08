@@ -1,0 +1,209 @@
+<div class="container">
+  <!-- Header Responsive -->
+  <div class="header">
+    <h1>✈️ Sistema de Reservas de Vuelo</h1>
+    
+    <div class="user-info-container">
+      <!-- Información del usuario -->
+      <div class="user-info" ng-if="getUserEmail()">
+        <div class="user-icon">
+          {{getUserEmail().charAt(0).toUpperCase()}}
+        </div>
+        <span class="user-email">{{getUserEmail()}}</span>
+      </div>
+      
+      <!-- Botones de acción -->
+      <div class="header-actions">
+        <button class="btn btn-primary" ng-click="verReporte()">
+          📊 Ver Reporte
+        </button>
+        <button class="btn-logout" ng-click="logout()">
+          🚪 Cerrar Sesión
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulario -->
+  <div class="reservation-form-container">
+    <h2>Información de Reserva</h2>
+
+    <!-- Mostrar vuelo asignado automáticamente -->
+    <div class="form-group">
+      <label>Vuelo asignado</label>
+      <div ng-if="assignedFlight">
+        {{assignedFlight.flight_code}} — {{assignedFlight.origin}} → {{assignedFlight.destination}} ({{assignedFlight.departure_date | date:'short'}})
+      </div>
+      <div class="error-message" ng-if="!assignedFlight && formStarted">
+        No se ha podido asignar un vuelo automáticamente todavía.
+      </div>
+    </div>
+
+    <form class="reservation-form" novalidate>
+      <div class="form-group">
+        <label>Cantidad de asientos:</label>
+        <input type="number" ng-model="cantidad" min="1" required />
+      </div>
+      <div class="form-group">
+        <label>Clase de asiento:</label>
+        <select ng-model="seat_class" required>
+          <option value="business">Clase de negocios</option>
+          <option value="economy">Clase económica</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Tipo de selección:</label>
+        <div class="radio-group">
+          <label><input type="radio" ng-model="seleccion_manual" ng-value="true" /> Manual</label>
+          <label><input type="radio" ng-model="seleccion_manual" ng-value="false" /> Automática</label>
+        </div>
+      </div>
+      <button type="button" class="btn-primary" ng-click="startForm()">Continuar</button>
+    </form>
+  </div>
+  <div class="seat-legend">
+      <div class="legend-item"><span class="legend-box available"></span> Disponible</div>
+      <div class="legend-item"><span class="legend-box reserved"></span> Ocupado</div>
+      <div class="legend-item"><span class="legend-box selected"></span> Seleccionado</div>
+    </div>
+
+  <!-- Diagrama: se muestra cuando se pulsa Continuar o cuando seleccion_manual es true -->
+  <div class="seat-map-container" ng-show="formStarted || seleccion_manual">
+    <h3>Diagrama de asientos — Clase: {{seat_class | uppercase}}</h3>
+
+    <!-- Negocios: números 1-2 -->
+    <div class="seat-section" ng-if="seat_class === 'business'">
+      <div class="seat-row" ng-repeat="row in ['I','G','F','D','C','A']">
+        <span class="row-label">{{row}}</span>
+        <div class="seats">
+          <button class="seat"
+                  ng-repeat="num in [1,2]"
+                  ng-class="{'reserved': isReservedId(row + num), 'selected': isSelectedId(row + num)}"
+                  ng-disabled="isReservedId(row + num)"
+                  ng-click="openPassengerForm(row + num)">
+            {{num}}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Económica: números 3-7 -->
+    <div class="seat-section" ng-if="seat_class === 'economy'">
+      <div class="seat-row" ng-repeat="row in ['I','H','G','F','E','D','C','B','A']">
+        <span class="row-label">{{row}}</span>
+        <div class="seats">
+          <button class="seat"
+                  ng-repeat="num in [3,4,5,6,7]"
+                  ng-class="{'reserved': isReservedId(row + num), 'selected': isSelectedId(row + num)}"
+                  ng-disabled="isReservedId(row + num)"
+                  ng-click="openPassengerForm(row + num)">
+            {{num}}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODIFICADO: Mostrar botón confirmar para manual Y automático -->
+    <div class="actions">
+      <!-- Mensaje informativo para selección automática -->
+      <div ng-if="!seleccion_manual && asientosSeleccionados.length > 0" style="background: #e3f2fd; padding: 15px; border-radius: 4px; margin-bottom: 15px;">
+        <p style="margin: 0; color: #1976d2;">
+          ✅ <strong>Asientos asignados automáticamente:</strong> 
+          <span ng-repeat="seat in asientosSeleccionados">
+            {{seat.seat_number || seat.id}}<span ng-if="!$last">, </span>
+          </span>
+        </p>
+        <p style="margin: 10px 0 0 0; color: #666; font-size: 14px;">
+          Haz clic en cada asiento para ingresar los datos del pasajero.
+        </p>
+      </div>
+
+      <!-- Botón confirmar (visible para ambos modos) -->
+      <button class="btn-primary" 
+              ng-click="confirmarSeleccion()" 
+              ng-disabled="asientosSeleccionados.length !== cantidad || !todosAsientosTienenPasajero()">
+        Confirmar selección ({{asientosSeleccionados.length}} / {{cantidad}})
+        <span ng-if="!todosAsientosTienenPasajero()"> - Completa datos de pasajeros</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal simple para ingresar datos del pasajero -->
+  <div class="modal-backdrop" ng-show="passengerModalVisible">
+    <div class="modal">
+      <h3>Datos para asiento {{modal.seatNumber || modal.seatId}}</h3>
+
+      <label>Nombre completo</label>
+      <input type="text" 
+             ng-model="modal.passenger_name" 
+             placeholder="Nombre completo" />
+
+      <label>CUI (13 dígitos)</label>
+      <input type="text" 
+             ng-model="modal.cui_full" 
+             ng-change="validateCUIRealTime()"
+             maxlength="13" 
+             placeholder="1234567890123"
+             ng-class="{'input-valid': modal.cuiValid, 'input-invalid': modal.cuiError}" />
+      
+      <!-- NUEVO: Mensaje de validación en tiempo real -->
+      <div ng-if="modal.cuiError" style="color: #d32f2f; font-size: 13px; margin-top: 5px;">
+        ❌ {{modal.cuiError}}
+      </div>
+      <div ng-if="modal.cuiValid" style="color: #4CAF50; font-size: 13px; margin-top: 5px;">
+        ✅ CUI válido
+      </div>
+
+      <label><input type="checkbox" ng-model="modal.has_luggage" /> Llevará maleta</label>
+
+      <div class="modal-actions">
+        <button class="btn-primary" 
+                ng-click="modalContinue()"
+                ng-disabled="!modal.cuiValid || !modal.passenger_name">
+          Continuar
+        </button>
+        <button class="btn-secondary" ng-click="closePassengerModal()">Cancelar</button>
+      </div>
+
+      <div class="modal-confirm" ng-if="modalConfirmVisible">
+        <p>Asiento: <strong>{{modal.seatNumber || modal.seatId}}</strong></p>
+        <p>Nombre: {{modal.passenger_name}}</p>
+        <p>CUI: {{modal.cui_full}}</p>
+        <p>Maleta: {{modal.has_luggage ? 'Sí' : 'No'}}</p>
+        <p>Fecha reservada: {{modal.reserved_at}}</p>
+        <p>¿Deseas continuar?</p>
+        <button class="btn-primary" ng-click="confirmPassengerSave()">Sí, continuar</button>
+        <button class="btn-secondary" ng-click="cancelPassengerConfirm()">No, modificar</button>
+      </div>
+
+      <div class="modal-error" ng-if="modal.error">{{modal.error}}</div>
+    </div>
+  </div>
+
+  <!-- Resumen -->
+  <div ng-if="showResumen" class="reservation-summary">
+    <h3>Resumen de la Reserva</h3>
+    <ul>
+      <li ng-repeat="c in confirmaciones">Asiento: {{c.seat_number}} - {{c.fecha}}</li>
+    </ul>
+  </div>
+
+  <!-- NUEVO: Botón Ver Reporte al final -->
+  <div style="margin-top: 40px; padding: 20px; text-align: center; border-top: 2px solid #ddd;">
+    <button ng-click="verReporte()" 
+            style="padding: 12px 30px; 
+                   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                   color: white; 
+                   border: none; 
+                   border-radius: 8px; 
+                   cursor: pointer; 
+                   font-size: 16px; 
+                   font-weight: 600;
+                   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                   transition: all 0.3s ease;"
+            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 12px rgba(0,0,0,0.2)'"
+            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.1)'">
+      📊 Ver Reporte de Reservas
+    </button>
+  </div>
+</div>

@@ -1,0 +1,15 @@
+<div class="flights-page">
+  <h2>Vuelos</h2>
+  <div ng-if="loadingFlights">Cargando vuelos...</div>
+  <div ng-if="!loadingFlights && flights.length === 0">No hay vuelos disponibles.</div>
+  <ul class="flight-list">
+    <li ng-repeat="f in flights">
+      <div class="flight-info">
+        <strong>{{f.flight_code}}</strong> — {{f.origin}} → {{f.destination}} — {{f.departure_date | date:'short'}}
+      </div>
+      <div>
+        <a href="#!/reserve/{{f.id}}" class="btn-primary">Reservar</a>
+      </div>
+    </li>
+  </ul>
+</div>

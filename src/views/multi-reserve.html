@@ -1,0 +1,90 @@
+<div class="multi-reserve-page">
+  <h2>Reserva de Asientos</h2>
+
+  <!-- Instrucciones para el usuario -->
+  <div class="instructions">
+    <ul>
+      <li>Indica la <strong>cantidad de asientos</strong> que deseas reservar.</li>
+      <li>Selecciona el <strong>tipo de asiento</strong> (clase de negocios o clase económica).</li>
+      <li>Elige si deseas <strong>seleccionar los asientos manualmente</strong> o que el sistema los asigne aleatoriamente según el tipo.</li>
+      <li>Para cada asiento, ingresa el <strong>nombre completo</strong>, <strong>CUI</strong> (con estructura válida), y si llevará maleta.</li>
+      <li>Después de reservar cada asiento, se mostrará el <strong>número de asiento y la fecha</strong> de reserva para confirmación.</li>
+      <li>Si reservas más de un asiento, podrás decidir si deseas continuar con la reserva de los faltantes.</li>
+      <li>Antes de finalizar, puedes <strong>modificar la información</strong> de cualquier asiento.</li>
+      <li>Al finalizar la reserva, recibirás un <strong>correo electrónico</strong> con el detalle y el precio total.</li>
+    </ul>
+  </div>
+
+  <div class="error" ng-if="error">{{error}}</div>
+
+  <!-- Paso 1: Cantidad y clase -->
+  <div ng-if="step === 1">
+    <label>Cantidad de asientos a reservar:</label>
+    <input type="number" min="1" ng-model="cantidad" />
+    <label>Clase de asiento:</label>
+    <select ng-model="seat_class">
+      <option value="business">Negocios</option>
+      <option value="economy">Económica</option>
+    </select>
+    <button class="btn-primary" ng-click="nextStep()">Siguiente</button>
+  </div>
+
+  <!-- Paso 2: Selección manual o aleatoria -->
+  <div ng-if="step === 2">
+    <label>¿Deseas seleccionar los asientos manualmente?</label>
+    <button class="btn-primary" ng-click="setSeleccionManual(true)">Sí</button>
+    <button class="btn-primary" ng-click="setSeleccionManual(false)">No, asignar aleatoriamente</button>
+  </div>
+
+  <!-- Paso 2.5: Selección manual de asientos -->
+  <div ng-if="step === 2.5">
+    <h3>Selecciona {{cantidad}} asientos disponibles</h3>
+    <div class="seats-grid">
+      <div ng-repeat="s in seats" class="seat-card"
+           ng-class="{'occupied': s.is_occupied, 'selected': asientosSeleccionados.indexOf(s) !== -1}"
+           ng-click="toggleSeat(s)">
+        <div class="seat-number">{{s.seat_number}}</div>
+        <div class="seat-class">{{s.seat_class}}</div>
+      </div>
+    </div>
+    <button class="btn-primary" ng-click="confirmManualSeats()">Confirmar selección</button>
+  </div>
+
+  <!-- Paso 3: Datos de pasajero por asiento -->
+  <div ng-if="step === 3">
+    <h3>Datos para asiento {{currentIndex+1}} ({{seleccion_manual ? asientosSeleccionados[currentIndex].seat_number : asientosSeleccionados[currentIndex].seat_number}})</h3>
+    <label>Nombre completo:</label>
+    <input type="text" ng-model="currentPasajero().passenger_name" />
+    <label>CUI:</label>
+    <input type="text" ng-model="currentPasajero().cui_full" maxlength="13" />
+    <label><input type="checkbox" ng-model="currentPasajero().has_luggage" /> Lleva maleta</label>
+    <button class="btn-primary" ng-click="confirmarPasajero()">Confirmar este asiento</button>
+    <div class="confirmation" ng-if="confirmaciones[currentIndex]">
+      Asiento reservado: {{confirmaciones[currentIndex].seat_number}}<br>
+      Fecha: {{confirmaciones[currentIndex].fecha}}
+    </div>
+  </div>
+
+  <!-- Paso 4: Resumen y confirmación -->
+  <div ng-if="step === 4">
+    <h3>Resumen de reserva</h3>
+    <ul>
+      <li ng-repeat="c in confirmaciones track by $index">
+        Asiento: {{c.seat_number}}, Fecha: {{c.fecha}}
+        <button ng-click="modificarPasajero($index)">Modificar</button>
+      </li>
+    </ul>
+    <div>Precio por asiento: {{precio_unitario | currency}}</div>
+    <div>Total: {{precio_total | currency}}</div>
+    <label>Email para confirmación:</label>
+    <input type="email" ng-model="email" />
+    <button class="btn-primary" ng-click="enviarReserva()">Confirmar y reservar</button>
+  </div>
+
+  <!-- Mensaje de éxito al finalizar -->
+  <div class="success" ng-if="step === 5">
+    <h3>¡Reserva realizada con éxito!</h3>
+    <p>Recibirás un correo electrónico con el detalle de tu reserva.</p>
+    <a class="btn-primary" href="#!/flights">Volver a vuelos</a>
+  </div>
+</div>

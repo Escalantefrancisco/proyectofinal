@@ -1,0 +1,16 @@
+{
+  "name": "airplane-seat-reservation-app",
+  "version": "1.0.0",
+  "description": "An AngularJS application for airplane seat reservations.",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "http-server ./src -o",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "dependencies": {
+    "angular": "^1.8.2",
+    "http-server": "^0.12.3"
+  },
+  "author": "",
+  "license": "ISC"
+}

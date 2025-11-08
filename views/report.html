@@ -1,0 +1,60 @@
+<div style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>📊 Reporte de Reservas</h2>
+        <button ng-click="volver()" style="padding: 8px 16px; background: #607D8B; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            ← Volver
+        </button>
+    </div>
+
+    <div ng-if="loading" style="text-align: center; padding: 40px;">
+        <p>Cargando reservas...</p>
+    </div>
+
+    <div ng-if="error" style="background: #ffebee; color: #c62828; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+        {{error}}
+    </div>
+
+    <div ng-if="!loading && !error && reservations.length === 0" style="text-align: center; padding: 40px; background: #f5f5f5; border-radius: 4px;">
+        <p style="font-size: 18px; color: #666;">No tienes reservas registradas</p>
+    </div>
+
+    <div ng-if="!loading && !error && reservations.length > 0">
+        <table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <thead>
+                <tr style="background: #2196F3; color: white;">
+                    <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">ID Grupo</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Vuelo</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Fecha</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Asientos</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Pasajeros</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Total</th>
+                    <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="res in reservations" style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 12px; border: 1px solid #ddd;">{{res.id}}</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">Vuelo #{{res.flight_id}}</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">{{res.created_at | date:'dd/MM/yyyy HH:mm'}}</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">
+                        <span ng-repeat="item in res.items">
+                            {{item.seat_number}}<span ng-if="!$last">, </span>
+                        </span>
+                    </td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">
+                        <div ng-repeat="item in res.items" style="margin-bottom: 4px;">
+                            {{item.passenger_name}}
+                        </div>
+                    </td>
+                    <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Q{{res.total_price | number:2}}</td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">
+                        <span style="padding: 4px 8px; border-radius: 4px; font-size: 12px;"
+                              ng-style="res.status === 'active' ? {'background': '#4CAF50', 'color': 'white'} : {'background': '#f44336', 'color': 'white'}">
+                            {{res.status | uppercase}}
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,54 @@
+{
+  "seats": [
+    {
+      "id": 1,
+      "status": "available",
+      "class": "economy"
+    },
+    {
+      "id": 2,
+      "status": "available",
+      "class": "economy"
+    },
+    {
+      "id": 3,
+      "status": "reserved",
+      "class": "business"
+    },
+    {
+      "id": 4,
+      "status": "available",
+      "class": "economy"
+    },
+    {
+      "id": 5,
+      "status": "reserved",
+      "class": "business"
+    },
+    {
+      "id": 6,
+      "status": "available",
+      "class": "economy"
+    },
+    {
+      "id": 7,
+      "status": "available",
+      "class": "business"
+    },
+    {
+      "id": 8,
+      "status": "available",
+      "class": "economy"
+    },
+    {
+      "id": 9,
+      "status": "reserved",
+      "class": "economy"
+    },
+    {
+      "id": 10,
+      "status": "available",
+      "class": "business"
+    }
+  ]
+}

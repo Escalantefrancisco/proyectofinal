@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="airplaneSeatReservationApp">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seat Reservation Report</title>
+    <link rel="stylesheet" href="styles/styles.css">
+</head>
+<body ng-controller="SeatController as seatCtrl">
+
+    <div class="report-container">
+        <div style="max-width: 1400px; margin: 0 auto; padding: 20px;">
+            <!-- Header Responsive -->
+            <div class="header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <h1 style="margin: 0;">📊 Reportes del Sistema</h1>
+                
+                <div class="user-info-container" style="display: flex; align-items: center; gap: 15px;">
+                    <!-- Información del usuario -->
+                    <div class="user-info" ng-if="getUserEmail()" style="display: flex; align-items: center; gap: 5px;">
+                        <div class="user-icon" style="width: 36px; height: 36px; background: #2196F3; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                          {{getUserEmail().charAt(0).toUpperCase()}}
+                        </div>
+                        <span class="user-email" style="font-weight: 500; color: #333;">{{getUserEmail()}}</span>
+                    </div>
+                    
+                    <!-- Botones de acción -->
+                    <div class="header-actions" style="display: flex; gap: 10px;">
+                        <button class="btn btn-primary" ng-click="volver()" style="padding: 8px 16px; background: #607D8B; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                          ← Volver
+                        </button>
+                        <button class="btn-logout" ng-click="logout()" style="padding: 8px 16px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                          🚪 Cerrar Sesión
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección: Diagrama de Asientos -->
+            <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px;">
+                <h3 style="margin-top: 0;">✈️ Diagrama de Asientos por Vuelo</h3>
+                
+                <div style="margin-bottom: 15px;">
+                    <label>Seleccionar vuelo:</label>
+                    <select ng-model="selectedFlight" 
+                            ng-options="f as (f.flight_code + ' - ' + f.origin + ' → ' + f.destination) for f in flights"
+                            ng-change="loadFlightSeats()"
+                            style="padding: 8px; border-radius: 4px; border: 1px solid #ddd; margin-left: 10px;">
+                        <option value="">-- Selecciona un vuelo --</option>
+                    </select>
+                </div>
+
+                <div ng-if="loadingSeats" style="text-align: center; padding: 20px;">
+                    <p>Cargando asientos...</p>
+                </div>
+
+                <div ng-if="showDiagram && !loadingSeats" style="margin-top: 20px;">
+                    <div style="display: flex; gap: 20px; margin-bottom: 15px;">
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <div style="width: 30px; height: 30px; background: #4CAF50; border: 1px solid #333;"></div>
+                            <span>Disponible</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <div style="width: 30px; height: 30px; background: #f44336; border: 1px solid #333;"></div>
+                            <span>Ocupado</span>
+                        </div>
+                    </div>
+
+                    <!-- Clase Business -->
+                    <h4>Clase de Negocios (Asientos 1-2)</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; margin-bottom: 30px;">
+                        <div ng-repeat="seat in flightSeats | filter:{seat_class:'business'}" 
+                             style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border: 2px solid #333; border-radius: 4px; font-weight: bold;"
+                             ng-style="{'background-color': isSeatOccupied(seat) ? '#f44336' : '#4CAF50', 'color': 'white'}">
+                            {{seat.seat_number}}
+                        </div>
+                    </div>
+
+                    <!-- Clase Economy -->
+                    <h4>Clase Económica (Asientos 3-7)</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px;">
+                        <div ng-repeat="seat in flightSeats | filter:{seat_class:'economy'}" 
+                             style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border: 2px solid #333; border-radius: 4px; font-weight: bold;"
+                             ng-style="{'background-color': isSeatOccupied(seat) ? '#f44336' : '#4CAF50', 'color': 'white'}">
+                            {{seat.seat_number}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección: Estadísticas Generales -->
+            <div ng-if="loadingStats" style="text-align: center; padding: 40px;">
+                <p>Cargando estadísticas...</p>
+            </div>
+
+            <div ng-if="!loadingStats && statistics">
+                <!-- Grid de Métricas -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                    
+                    <!-- Card: Usuarios -->
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <h3 style="margin: 0 0 10px 0;">👥 Usuarios Creados</h3>
+                        <p style="font-size: 36px; font-weight: bold; margin: 0;">{{statistics.totalUsers}}</p>
+                    </div>
+
+                    <!-- Card: Reservas Totales -->
+                    <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <h3 style="margin: 0 0 10px 0;">📋 Reservas Totales</h3>
+                        <p style="font-size: 36px; font-weight: bold; margin: 0;">{{statistics.totalReservations}}</p>
+                    </div>
+
+                    <!-- Card: Business Ocupados -->
+                    <div style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <h3 style="margin: 0 0 10px 0;">💼 Business Ocupados</h3>
+                        <p style="font-size: 36px; font-weight: bold; margin: 0;">{{statistics.seats.business.occupied}}</p>
+                        <small>de {{statistics.seats.business.total}} total</small>
+                    </div>
+
+                    <!-- Card: Business Libres -->
+                    <div style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <h3 style="margin: 0 0 10px 0;">💼 Business Libres</h3>
+                        <p style="font-size: 36px; font-weight: bold; margin: 0;">{{statistics.seats.business.free}}</p>
+                        <small>de {{statistics.seats.business.total}} total</small>
+                    </div>
+
+                    <!-- Card: Economy Ocupados -->
+                    <div style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <h3 style="margin: 0 0 10px 0;">🪑 Economy Ocupados</h3>
+                        <p style="font-size: 36px; font-weight: bold; margin: 0;">{{statistics.seats.economy.occupied}}</p>
+                        <small>de {{statistics.seats.economy.total}} total</small>
+                    </div>
+
+                    <!-- Card: Economy Libres -->
+                    <div style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: #333; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <h3 style="margin: 0 0 10px 0;">🪑 Economy Libres</h3>
+                        <p style="font-size: 36px; font-weight: bold; margin: 0;">{{statistics.seats.economy.free}}</p>
+                        <small>de {{statistics.seats.economy.total}} total</small>
+                    </div>
+
+                    <!-- Card: Selección Manual -->
+                    <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <h3 style="margin: 0 0 10px 0;">👆 Selección Manual</h3>
+                        <p style="font-size: 36px; font-weight: bold; margin: 0;">{{statistics.selectionType.manual}}</p>
+                        <small>asientos</small>
+                    </div>
+
+                    <!-- Card: Selección Automática -->
+                    <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <h3 style="margin: 0 0 10px 0;">🤖 Selección Automática</h3>
+                        <p style="font-size: 36px; font-weight: bold; margin: 0;">{{statistics.selectionType.automatic}}</p>
+                        <small>asientos</small>
+                    </div>
+
+                    <!-- Card: Reservas Activas -->
+                    <div style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <h3 style="margin: 0 0 10px 0;">✅ Activas</h3>
+                        <p style="font-size: 36px; font-weight: bold; margin: 0;">{{statistics.reservationStatus.active}}</p>
+                    </div>
+
+                    <!-- Card: Reservas Modificadas -->
+                    <div style="background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%); color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <h3 style="margin: 0 0 10px 0;">✏️ Modificadas</h3>
+                        <p style="font-size: 36px; font-weight: bold; margin: 0;">{{statistics.reservationStatus.modified}}</p>
+                    </div>
+
+                    <!-- Card: Reservas Canceladas -->
+                    <div style="background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%); color: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <h3 style="margin: 0 0 10px 0;">❌ Canceladas</h3>
+                        <p style="font-size: 36px; font-weight: bold; margin: 0;">{{statistics.reservationStatus.cancelled}}</p>
+                    </div>
+                </div>
+
+                <!-- Tabla: Reservas por Usuario -->
+                <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px;">
+                    <h3 style="margin-top: 0;">📊 Cantidad de Reservas por Usuario</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #2196F3; color: white;">
+                                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Usuario (Email)</th>
+                                <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">Total de Reservas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="user in statistics.reservationsByUser" style="border-bottom: 1px solid #ddd;">
+                                <td style="padding: 12px; border: 1px solid #ddd;">{{user.email}}</td>
+                                <td style="padding: 12px; text-align: center; border: 1px solid #ddd; font-weight: bold;">{{user.total_reservations}}</td>
+                            </tr>
+                            <tr ng-if="statistics.reservationsByUser.length === 0">
+                                <td colspan="2" style="padding: 20px; text-align: center; color: #999;">No hay datos disponibles</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- NUEVO: Tabla de Asientos Seleccionados por Usuario -->
+                <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px;">
+                    <h3 style="margin-top: 0;">🪑 Cantidad de Asientos Seleccionados por Usuario</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #9C27B0; color: white;">
+                                <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Usuario (Email)</th>
+                                <th style="padding: 12px; text-align: center; border: 1px solid #ddd;">Total de Asientos</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="user in statistics.seatsByUser" style="border-bottom: 1px solid #ddd;">
+                                <td style="padding: 12px; border: 1px solid #ddd;">{{user.email}}</td>
+                                <td style="padding: 12px; text-align: center; border: 1px solid #ddd; font-weight: bold;">{{user.total_seats}}</td>
+                            </tr>
+                            <tr ng-if="statistics.seatsByUser.length === 0">
+                                <td colspan="2" style="padding: 20px; text-align: center; color: #999;">No hay datos disponibles</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- NUEVO: Resumen de Tipo de Selección -->
+                <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px;">
+                    <h3 style="margin-top: 0;">🎯 Resumen: Tipo de Selección de Asientos</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 14px; opacity: 0.9; margin-bottom: 10px;">SELECCIÓN MANUAL</div>
+                            <div style="font-size: 48px; font-weight: bold;">{{statistics.selectionType.manual}}</div>
+                            <div style="font-size: 12px; opacity: 0.8; margin-top: 10px;">asientos seleccionados manualmente</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 30px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 14px; opacity: 0.9; margin-bottom: 10px;">SELECCIÓN AUTOMÁTICA</div>
+                            <div style="font-size: 48px; font-weight: bold;">{{statistics.selectionType.automatic}}</div>
+                            <div style="font-size: 12px; opacity: 0.8; margin-top: 10px;">asientos seleccionados aleatoriamente</div>
+                        </div>
+                        <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 30px; border-radius: 8px; text-align: center;">
+                            <div style="font-size: 14px; opacity: 0.9; margin-bottom: 10px;">TOTAL DE ASIENTOS</div>
+                            <div style="font-size: 48px; font-weight: bold;">{{statistics.selectionType.manual + statistics.selectionType.automatic}}</div>
+                            <div style="font-size: 12px; opacity: 0.8; margin-top: 10px;">asientos reservados en total</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mis Reservas -->
+            <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <h3 style="margin-top: 0;">📋 Mis Reservas</h3>
+
+                <div ng-if="loading" style="text-align: center; padding: 40px;">
+                    <p>Cargando reservas...</p>
+                </div>
+
+                <div ng-if="error" style="background: #ffebee; color: #c62828; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                    {{error}}
+                </div>
+
+                <div ng-if="!loading && !error && reservations.length === 0" style="text-align: center; padding: 40px; background: #f5f5f5; border-radius: 4px;">
+                    <p style="font-size: 18px; color: #666;">No tienes reservas registradas</p>
+                </div>
+
+                <table ng-if="!loading && !error && reservations.length > 0" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #2196F3; color: white;">
+                            <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">ID</th>
+                            <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Vuelo</th>
+                            <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Fecha</th>
+                            <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Asientos</th>
+                            <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Pasajeros</th>
+                            <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Total</th>
+                            <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="res in reservations" style="border-bottom: 1px solid #ddd;">
+                            <td style="padding: 12px; border: 1px solid #ddd;">{{res.id}}</td>
+                            <td style="padding: 12px; border: 1px solid #ddd;">Vuelo #{{res.flight_id}}</td>
+                            <td style="padding: 12px; border: 1px solid #ddd;">{{res.created_at | date:'dd/MM/yyyy HH:mm'}}</td>
+                            <td style="padding: 12px; border: 1px solid #ddd;">
+                                <span ng-repeat="item in res.items">
+                                    {{item.seat_number}}<span ng-if="!$last">, </span>
+                                </span>
+                            </td>
+                            <td style="padding: 12px; border: 1px solid #ddd;">
+                                <div ng-repeat="item in res.items" style="margin-bottom: 4px;">
+                                    {{item.passenger_name}}
+                                </div>
+                            </td>
+                            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">Q{{res.total_price | number:2}}</td>
+                            <td style="padding: 12px; border: 1px solid #ddd;">
+                                <span style="padding: 4px 8px; border-radius: 4px; font-size: 12px;"
+                                      ng-style="res.status === 'active' ? {'background': '#4CAF50', 'color': 'white'} : {'background': '#f44336', 'color': 'white'}">
+                                    {{res.status | uppercase}}
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
