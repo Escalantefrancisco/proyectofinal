@@ -8,20 +8,33 @@ Este proyecto es una aplicación web desarrollada con **AngularJS** que permite 
 
 airplane-seat-reservation-app
 ├── src
-│ ├── index.html # Archivo principal que inicia la aplicación
-│ ├── app.js # Configuración e inicialización de AngularJS
+index.html # Archivo principal que inicia la aplicación
+app.js # Configuración e inicialización de AngularJS
+
 │ ├── controllers
+
 │ │ └── seatController.js # Controlador con la lógica de reserva de asientos
+
 │ ├── services
+
 │ │ └── seatService.js # Servicio que maneja los datos y operaciones de reserva
+
 │ ├── styles
+
 │ │ └── styles.css # Estilos CSS de la aplicación
+
 │ ├── views
+
 │ │ ├── seatReservation.html # Vista para seleccionar y reservar asientos
+
 │ │ └── report.html # Vista para ver el reporte de reservas
+
 │ └── assets
 │ └── seats.json # Datos iniciales de los asientos
+
+
 ├── package.json # Dependencias del proyecto
+
 └── README.md # Documentación del proyecto
 
 ---
