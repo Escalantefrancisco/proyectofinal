@@ -4,7 +4,7 @@ Este proyecto es una aplicación web desarrollada con **AngularJS** que permite 
 
 ---
 
-## 📂 Estructura del Proyecto
+📂 Estructura del Proyecto
 
 airplane-seat-reservation-app
 ├── src
